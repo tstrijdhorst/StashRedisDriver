@@ -255,17 +255,21 @@ class Redis extends AbstractDriver {
 			/*
 			 * Check if there is an index available in the pathdb, that means there was a deletion of the stackparent before
 			 * and we should use the index inside the pathdb to as a prefix for the sub-keys.
+			 *
+			 * However if we are generating the path this should not be included since the index will never get higher than 1 then.
 			 */
-			$pathString = self::$pathPrefix.$keyString;
-			if (isset($this->keyCache[$pathString])) {
-				$index = $this->keyCache[$pathString];
-			}
-			else {
-				$index = $this->redis->get($pathString);
-			}
-			
-			if ($index) {
-				$keyString .= '_'.$index;
+			if (!$path) {
+				$pathString = self::$pathPrefix.$keyString;
+				if (isset($this->keyCache[$pathString])) {
+					$index = $this->keyCache[$pathString];
+				}
+				else {
+					$index = $this->redis->get($pathString);
+				}
+				
+				if ($index) {
+					$keyString .= '_'.$index;
+				}
 			}
 			
 			$keyString .= ':';
