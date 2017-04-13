@@ -52,6 +52,12 @@ class Redis extends AbstractDriver {
 	protected $keyCache = [];
 	
 	/**
+	 * If this is true the keyParts will be normalized using the default Utilities::normalizeKeys($key)
+	 * @var bool
+	 */
+	protected $normalizeKeys = false;
+	
+	/**
 	 * The options array should contain an array of servers,
 	 *
 	 * The "server" option expects an array of servers, with each server being represented by an associative array. Each
@@ -67,6 +73,10 @@ class Redis extends AbstractDriver {
 	protected function setOptions(array $options = array()) {
 		$options += $this->getDefaultOptions();
 		
+		if (isset($options['normalize_keys'])) {
+			$this->normalizeKeys = $options['normalize_keys'];
+		}
+		
 		// Normalize Server Options
 		if (isset($options['servers'])) {
 			$unprocessedServers = (is_array($options['servers'])) ? $options['servers'] : [$options['servers']];
@@ -78,10 +88,10 @@ class Redis extends AbstractDriver {
 			$servers = [['server' => self::SERVER_DEFAULT_HOST, 'port' => self::SERVER_DEFAULT_PORT, 'ttl' => self::SERVER_DEFAULT_TTL]];
 		}
 		
-		// this will have to be revisited to support multiple servers, using
-		// the RedisArray object. That object acts as a proxy object, meaning
-		// most of the class will be the same even after the changes.
-		
+		/*
+		 * This will have to be revisited to support multiple servers, using the RedisArray object.
+		 * That object acts as a proxy object, meaning most of the class will be the same even after the changes.
+		 */
 		if (count($servers) == 1) {
 			$server = $servers[0];
 			$redis  = new \Redis();
@@ -217,7 +227,9 @@ class Redis extends AbstractDriver {
 	 * @return string
 	 */
 	protected function makeKeyString($key, $path = false) {
-		$key = Utilities::normalizeKeys($key);
+		if ($this->normalizeKeys) {
+			$key = Utilities::normalizeKeys($key);
+		}
 		
 		$keyString = '';
 		foreach ($key as $name) {

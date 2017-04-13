@@ -15,3 +15,15 @@ Another reason for making this repository instead of adding it to the project it
 Therefore the Drivers (which depend on third party software) should be in seperate repositories that clearly state their dependency and should inversely depend on the library in order to decouple them.
 
 It remains to be seen if this implementation will take the place of the current driver in the Stash project. That will become clear after communication with the project leaders.
+
+# Extra Options
+This package adds the following options
+
+## ```normalize_keys```
+**default value**: false
+
+***Note*** If set to false it is illegal to use ```:``` and ```_``` as part of your keys. Just define them as ```/part/of/a/nice/key/``` without using underscores and you'll be fine. 
+
+If this is true all the parts of the keys will be normalized with the default Stash key normalization strategy. In practice this means that all the parts will be converted to md5 hashes. Warning: This may result in pretty long keys, a more intelligent normalization strategy might be required in those cases.
+
+ 
