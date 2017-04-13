@@ -198,13 +198,20 @@ class Redis extends AbstractDriver {
 			return $this->redis->flushDB();
 		}
 		
-		$pathString = $this->makeKeyString($key, true);
 		$keyString  = $this->makeKeyString($key);
-		
 		$this->redis->delete($keyString); // remove direct item.
-		$this->deleteSubKeys($keyString); // remove all the subitems
 		
-		$this->keyCache[$pathString] = $this->redis->incr($pathString); // increment index for children items
+		/**
+		 * If the key has subkeys that means that we will have to remove them too.
+		 * But first we create a new index for the stackparent in the pathdb so we are sure there will be no new
+		 * subkeys added while we are deleting them.
+		 */
+		if ($this->hasSubKeys($keyString)) {
+			$pathString = $this->makeKeyString($key, true);
+			$this->keyCache[$pathString] = $this->redis->incr($pathString); //Create a new index and save it in the key cache
+			
+			$this->deleteSubKeys($keyString); // remove all the subitems
+		}
 		
 		return true;
 	}
@@ -265,16 +272,29 @@ class Redis extends AbstractDriver {
 	}
 	
 	/**
+	 * @param $keyString
+	 * @return bool
+	 */
+	private function hasSubKeys($keyString) {
+		return $this->redis->scan($iterator, $keyString.'*') !== false;
+	}
+	
+	/**
 	 * @param string $keyString
+	 * @return bool
 	 */
 	private function deleteSubKeys($keyString) {
-		$iterator = null;
+		$deletedSubKeys = false;
 		
+		$iterator = null;
 		while ($subKeys = $this->redis->scan($iterator, $keyString.'*')) {
 			foreach ($subKeys as $subKey) {
 				$this->redis->delete($subKey);
+				$deletedSubKeys = true;
 			}
 		}
+		
+		return $deletedSubKeys;
 	}
 	
 	/**
