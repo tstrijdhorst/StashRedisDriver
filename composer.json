@@ -31,7 +31,8 @@
   },
   "autoload": {
     "psr-4": {
-      "Respondens\\Stash\\": "src/"
+      "ResponStash\\": "src/",
+      "ResponStashTest\\": "test/"
     }
   }
 }

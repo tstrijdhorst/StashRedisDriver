@@ -5,7 +5,7 @@
  * It is however derived from that code.
  */
 
-namespace Respondens\Stash\Driver;
+namespace ResponStash\Driver;
 
 use Stash\Driver\AbstractDriver;
 use Stash\Utilities;
