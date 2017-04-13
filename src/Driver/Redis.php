@@ -261,7 +261,7 @@ class Redis extends AbstractDriver {
 				$index = $this->keyCache[$pathString];
 			}
 			else {
-				$index = $this->redis->get(self::$pathPrefix.$keyString);
+				$index = $this->redis->get($pathString);
 			}
 			
 			if ($index) {
