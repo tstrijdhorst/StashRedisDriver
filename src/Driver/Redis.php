@@ -234,18 +234,23 @@ class Redis extends AbstractDriver {
 	 * Turns a key array into a key string. This includes running the indexing functions used to manage the Redis
 	 * hierarchical storage.
 	 *
-	 * @param  array $key
+	 * @param  array $keyParts
 	 * @param  bool  $path
 	 * @return string
+	 * @throws \Exception
 	 */
-	protected function makeKeyString($key, $path = false) {
+	protected function makeKeyString($keyParts, $path = false) {
 		if ($this->normalizeKeys) {
-			$key = Utilities::normalizeKeys($key);
+			$keyParts = Utilities::normalizeKeys($keyParts);
 		}
 		
 		$keyString = '';
-		foreach ($key as $name) {
-			$keyString .= $name;
+		foreach ($keyParts as $keyPart) {
+			if (!$this->normalizeKeys && (strpos($keyPart, ':') || strpos($keyPart, '_'))) {
+				throw new \Exception('You cannot use `:` or `_` in keys if key_normalization is off.');
+			}
+			
+			$keyString .= $keyPart;
 			
 			/*
 			 * Check if there is an index available in the pathdb, that means there was a deletion of the stackparent before
