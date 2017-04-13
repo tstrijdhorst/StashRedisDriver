@@ -79,8 +79,8 @@ class Redis extends AbstractDriver {
 		}
 		
 		// Normalize Server Options
-		if (isset($options['servers'])) {
-			$unprocessedServers = (is_array($options['servers'])) ? $options['servers'] : [$options['servers']];
+		if (isset($options['servers']) && count($options['servers']) > 0) {
+			$unprocessedServers = (is_array($options['servers'][0])) ? $options['servers'] : [$options['servers']];
 			unset($options['servers']);
 			
 			$servers = $this->processServerConfigurations($unprocessedServers);
