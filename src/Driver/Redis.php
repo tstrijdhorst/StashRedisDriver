@@ -53,6 +53,7 @@ class Redis extends AbstractDriver {
 	
 	/**
 	 * If this is true the keyParts will be normalized using the default Utilities::normalizeKeys($key)
+	 *
 	 * @var bool
 	 */
 	protected $normalizeKeys = false;
@@ -113,7 +114,7 @@ class Redis extends AbstractDriver {
 		else {
 			$redisArrayOptions = [];
 			foreach (static::$redisArrayOptionNames as $optionName) {
-				if (isset($options[$optionName])){
+				if (isset($options[$optionName])) {
 					$redisArrayOptions[$optionName] = $options[$optionName];
 				}
 			}
@@ -167,39 +168,43 @@ class Redis extends AbstractDriver {
 	 * @inheritdoc
 	 */
 	public function storeData($key, $data, $expiration) {
-		$store = serialize(array('data' => $data, 'expiration' => $expiration));
-		if (is_null($expiration)) {
-			return $this->redis->set($this->makeKeyString($key), $store);
+		$serializedData = serialize(
+			[
+				'data'       => $data,
+				'expiration' => $expiration,
+			]
+		);
+		
+		if ($expiration === null) {
+			return $this->redis->set($this->makeKeyString($key), $serializedData);
 		}
-		else {
-			$ttl = $expiration - time();
-			
-			// Prevent us from even passing a negative ttl'd item to redis,
-			// since it will just round up to zero and cache forever.
-			if ($ttl < 1) {
-				return true;
-			}
-			
-			return $this->redis->setex($this->makeKeyString($key), $ttl, $store);
+		
+		$ttl = $expiration - time();
+		
+		// Prevent us from even passing a negative ttl'd item to redis,
+		// since it will just round up to zero and cache forever.
+		if ($ttl < 1) {
+			return true;
 		}
+		
+		return $this->redis->setex($this->makeKeyString($key), $ttl, $serializedData);
 	}
 	
 	/**
 	 * {@inheritdoc}
 	 */
 	public function clear($key = null) {
-		if (is_null($key)) {
-			$this->redis->flushDB();
-			
-			return true;
+		if ($key === null) {
+			return $this->redis->flushDB();
 		}
 		
 		$pathString = $this->makeKeyString($key, true);
 		$keyString  = $this->makeKeyString($key);
-		$this->redis->incr($pathString); // increment index for children items
+		
 		$this->redis->delete($keyString); // remove direct item.
-		$this->deleteSubKeys($keyString);
-		$this->keyCache[$pathString] = array();
+		$this->deleteSubKeys($keyString); // remove all the subitems
+		
+		$this->keyCache[$pathString] = $this->redis->incr($pathString); // increment index for children items
 		
 		return true;
 	}
