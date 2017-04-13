@@ -1,0 +1,36 @@
+{
+  "name": "Respondens/StashRedisDriver",
+  "description": "Alternative Redis Driver For Stash Project",
+  "keywords": [
+    "cache",
+    "caching",
+    "sessions",
+    "memcached",
+    "redis",
+    "apc",
+    "psr-6",
+    "psr6"
+  ],
+  "homepage": "https://github.com/Respondens/StashRedisDriver",
+  "type": "library",
+  "license": "TBD",
+  "authors": [
+    {
+      "name": "Tim Strijdhorst",
+      "email": "tim@decorrespondent.nl"
+    }
+  ],
+  "require": {
+    "php": "^5.4|^7.0",
+    "psr/cache": "~1.0",
+    "tedivm/stash": "0.14.*"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "4.8.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Respondens\\Stash\\": "src/"
+    }
+  }
+}
