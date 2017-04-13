@@ -14,7 +14,8 @@ use Stash\Utilities;
  * The Redis driver is used for storing data on a Redis system. This class uses
  * the PhpRedis extension to access the Redis server.
  *
- * @package Stash
+ * @package Respondens\Stash
+ * @author  Tim Strijdhorst <tim@decorrespondent.nl>
  * @author  Robert Hafner <tedivm@tedivm.com>
  */
 class Redis extends AbstractDriver {
@@ -23,6 +24,7 @@ class Redis extends AbstractDriver {
 	const SERVER_DEFAULT_TTL  = 0.1;
 	
 	protected static $pathPrefix = 'pathdb:';
+	
 	protected static $redisArrayOptionNames = [
 		"previous",
 		"function",
@@ -152,7 +154,7 @@ class Redis extends AbstractDriver {
 	}
 	
 	/**
-	 * {@inheritdoc}
+	 * @inheritdoc
 	 */
 	public function storeData($key, $data, $expiration) {
 		$store = serialize(array('data' => $data, 'expiration' => $expiration));
