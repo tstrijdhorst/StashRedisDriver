@@ -81,8 +81,6 @@ class Redis extends AbstractDriver {
 		// Normalize Server Options
 		if (isset($options['servers']) && count($options['servers']) > 0) {
 			$unprocessedServers = (is_array($options['servers'][0])) ? $options['servers'] : [$options['servers']];
-			unset($options['servers']);
-			
 			$servers = $this->processServerConfigurations($unprocessedServers);
 		}
 		else {
@@ -94,50 +92,16 @@ class Redis extends AbstractDriver {
 		 * That object acts as a proxy object, meaning most of the class will be the same even after the changes.
 		 */
 		if (count($servers) == 1) {
-			$server = $servers[0];
-			$redis  = new \Redis();
-			
-			if (isset($server['socket']) && $server['socket']) {
-				$redis->connect($server['socket']);
-			}
-			else {
-				$redis->connect($server['server'], $server['port'], $server['ttl']);
-			}
-			
-			// auth - just password
-			if (isset($options['password'])) {
-				$redis->auth($options['password']);
-			}
-			
-			$this->redis = $redis;
+			$this->redis  = $this->connectToSingleRedisServer($options, $servers[0]);
 		}
 		else {
-			$redisArrayOptions = [];
-			foreach (static::$redisArrayOptionNames as $optionName) {
-				if (isset($options[$optionName])) {
-					$redisArrayOptions[$optionName] = $options[$optionName];
-				}
-			}
-			
-			$serverArray = [];
-			foreach ($servers as $server) {
-				$serverString = $server['server'];
-				if (isset($server['port'])) {
-					$serverString .= ':'.$server['port'];
-				}
-				
-				$serverArray[] = $serverString;
-			}
-			
-			$redis = new \RedisArray($serverArray, $redisArrayOptions);
+			$this->redis = $this->connectToMultipleRedisServers($options, $servers);
 		}
 		
 		// select database
 		if (isset($options['database'])) {
-			$redis->select($options['database']);
+			$this->redis->select($options['database']);
 		}
-		
-		$this->redis = $redis;
 	}
 	
 	/**
@@ -353,5 +317,54 @@ class Redis extends AbstractDriver {
 		}
 		
 		return $servers;
+	}
+	
+	/**
+	 * @param array $options
+	 * @param       $server
+	 * @return \Redis
+	 */
+	protected function connectToSingleRedisServer(array $options, $server) {
+		$redis = new \Redis();
+		
+		if (isset($server['socket']) && $server['socket']) {
+			$redis->connect($server['socket']);
+		}
+		else {
+			$redis->connect($server['server'], $server['port'], $server['ttl']);
+		}
+		
+		// auth - just password
+		if (isset($options['password'])) {
+			$redis->auth($options['password']);
+		}
+		
+		return $redis;
+	}
+	
+	/**
+	 * @param array $options
+	 * @param array $servers
+	 * @return \RedisArray
+	 */
+	protected function connectToMultipleRedisServers(array $options, array $servers) {
+		$redisArrayOptions = [];
+		foreach (static::$redisArrayOptionNames as $optionName) {
+			if (isset($options[$optionName])) {
+				$redisArrayOptions[$optionName] = $options[$optionName];
+			}
+		}
+		
+		$serverArray = [];
+		foreach ($servers as $server) {
+			$serverString = $server['server'];
+			if (isset($server['port'])) {
+				$serverString .= ':'.$server['port'];
+			}
+			
+			$serverArray[] = $serverString;
+		}
+		
+		return new \RedisArray($serverArray, $redisArrayOptions);
 	}
 }
