@@ -19,6 +19,9 @@ use Stash\Utilities;
  */
 class Redis extends AbstractDriver {
 	protected static $pathPrefix = 'pathdb:';
+	const SERVER_DEFAULT_HOST = '127.0.0.1';
+	const SERVER_DEFAULT_PORT = 6379;
+	const SERVER_DEFAULT_TTL  = 0.1;
 	
 	/**
 	 * The Redis drivers.
@@ -70,7 +73,7 @@ class Redis extends AbstractDriver {
 			$servers = $this->processServerConfigurations($unprocessedServers);
 		}
 		else {
-			$servers = array(array('server' => '127.0.0.1', 'port' => '6379', 'ttl' => 0.1));
+			$servers = [['server' => self::SERVER_DEFAULT_HOST, 'port' => self::SERVER_DEFAULT_PORT, 'ttl' => self::SERVER_DEFAULT_TTL]];
 		}
 		
 		// this will have to be revisited to support multiple servers, using
@@ -85,9 +88,7 @@ class Redis extends AbstractDriver {
 				$redis->connect($server['socket']);
 			}
 			else {
-				$port = isset($server['port']) ? $server['port'] : 6379;
-				$ttl  = isset($server['ttl']) ? $server['ttl'] : 0.1;
-				$redis->connect($server['server'], $port, $ttl);
+				$redis->connect($server['server'], $server['port'], $server['ttl']);
 			}
 			
 			// auth - just password
@@ -281,26 +282,26 @@ class Redis extends AbstractDriver {
 			
 			if (isset($server['socket'])) {
 				$servers[] = array('socket' => $server['socket'], 'ttl' => $ttl);
+				continue;
 			}
-			else {
-				$host = '127.0.0.1';
-				if (isset($server['server'])) {
-					$host = $server['server'];
-				}
-				elseif (isset($server[0])) {
-					$host = $server[0];
-				}
-				
-				$port = '6379';
-				if (isset($server['port'])) {
-					$port = $server['port'];
-				}
-				elseif (isset($server[1])) {
-					$port = $server[1];
-				}
-				
-				$servers[] = array('server' => $host, 'port' => $port, 'ttl' => $ttl);
+			
+			$host = self::SERVER_DEFAULT_HOST;
+			if (isset($server['server'])) {
+				$host = $server['server'];
 			}
+			elseif (isset($server[0])) {
+				$host = $server[0];
+			}
+			
+			$port = self::SERVER_DEFAULT_PORT;
+			if (isset($server['port'])) {
+				$port = $server['port'];
+			}
+			elseif (isset($server[1])) {
+				$port = $server[1];
+			}
+			
+			$servers[] = ['server' => $host, 'port' => $port, 'ttl' => $ttl];
 		}
 		
 		return $servers;
