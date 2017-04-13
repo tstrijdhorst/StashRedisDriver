@@ -198,7 +198,7 @@ class Redis extends AbstractDriver {
 			return $this->redis->flushDB();
 		}
 		
-		$keyString  = $this->makeKeyString($key);
+		$keyString = $this->makeKeyString($key);
 		$this->redis->delete($keyString); // remove direct item.
 		
 		/**
@@ -207,7 +207,7 @@ class Redis extends AbstractDriver {
 		 * subkeys added while we are deleting them.
 		 */
 		if ($this->hasSubKeys($keyString)) {
-			$pathString = $this->makeKeyString($key, true);
+			$pathString                  = $this->makeKeyString($key, true);
 			$this->keyCache[$pathString] = $this->redis->incr($pathString); //Create a new index and save it in the key cache
 			
 			$this->deleteSubKeys($keyString); // remove all the subitems
