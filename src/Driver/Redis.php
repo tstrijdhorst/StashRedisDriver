@@ -18,10 +18,22 @@ use Stash\Utilities;
  * @author  Robert Hafner <tedivm@tedivm.com>
  */
 class Redis extends AbstractDriver {
-	protected static $pathPrefix = 'pathdb:';
 	const SERVER_DEFAULT_HOST = '127.0.0.1';
 	const SERVER_DEFAULT_PORT = 6379;
 	const SERVER_DEFAULT_TTL  = 0.1;
+	
+	protected static $pathPrefix = 'pathdb:';
+	protected static $redisArrayOptionNames = [
+		"previous",
+		"function",
+		"distributor",
+		"index",
+		"autorehash",
+		"pconnect",
+		"retry_interval",
+		"lazy_connect",
+		"connect_timeout",
+	];
 	
 	/**
 	 * The Redis drivers.
@@ -35,19 +47,7 @@ class Redis extends AbstractDriver {
 	 *
 	 * @var array
 	 */
-	protected $keyCache = array();
-	
-	protected $redisArrayOptionNames = array(
-		"previous",
-		"function",
-		"distributor",
-		"index",
-		"autorehash",
-		"pconnect",
-		"retry_interval",
-		"lazy_connect",
-		"connect_timeout",
-	);
+	protected $keyCache = [];
 	
 	/**
 	 * The options array should contain an array of servers,
@@ -99,14 +99,14 @@ class Redis extends AbstractDriver {
 			$this->redis = $redis;
 		}
 		else {
-			$redisArrayOptions = array();
-			foreach ($this->redisArrayOptionNames as $optionName) {
-				if (array_key_exists($optionName, $options)) {
+			$redisArrayOptions = [];
+			foreach (static::$redisArrayOptionNames as $optionName) {
+				if (isset($options[$optionName])){
 					$redisArrayOptions[$optionName] = $options[$optionName];
 				}
 			}
 			
-			$serverArray = array();
+			$serverArray = [];
 			foreach ($servers as $server) {
 				$serverString = $server['server'];
 				if (isset($server['port'])) {
