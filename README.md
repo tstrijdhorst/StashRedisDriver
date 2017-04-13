@@ -24,6 +24,6 @@ This package adds the following options
 
 ***Note*** If set to false it is illegal to use ```:``` and ```_``` as part of your keys. Just define them as ```/part/of/a/nice/key/``` without using underscores and you'll be fine. 
 
-If this is true all the parts of the keys will be normalized with the default Stash key normalization strategy. In practice this means that all the parts will be converted to md5 hashes. Warning: This may result in pretty long keys, a more intelligent normalization strategy might be required in those cases.
+If set to true all the parts of the keys will be normalized with the default Stash key normalization strategy. In practice this means that all the parts will be converted to md5 hashes. Warning: This may result in pretty long keys, a more intelligent normalization strategy might be required in those cases.
 
  
