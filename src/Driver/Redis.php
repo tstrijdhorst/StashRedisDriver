@@ -92,7 +92,7 @@ class Redis extends AbstractDriver {
 		 * That object acts as a proxy object, meaning most of the class will be the same even after the changes.
 		 */
 		if (count($servers) == 1) {
-			$this->redis  = $this->connectToSingleRedisServer($options, $servers[0]);
+			$this->redis = $this->connectToSingleRedisServer($options, $servers[0]);
 		}
 		else {
 			$this->redis = $this->connectToMultipleRedisServers($options, $servers);
