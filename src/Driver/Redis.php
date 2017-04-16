@@ -122,7 +122,7 @@ class Redis extends AbstractDriver {
 	}
 	
 	/**
-	 * {@inheritdoc}
+	 * @inheritdoc
 	 */
 	public function getData($key) {
 		return unserialize($this->redis->get($this->makeKeyString($key)));
@@ -155,7 +155,7 @@ class Redis extends AbstractDriver {
 	}
 	
 	/**
-	 * {@inheritdoc}
+	 * @inheritdoc
 	 */
 	public function clear($key = null) {
 		if ($key === null) {
@@ -181,17 +181,24 @@ class Redis extends AbstractDriver {
 	}
 	
 	/**
-	 * {@inheritdoc}
+	 * @inheritdoc
 	 */
 	public function purge() {
 		return true;
 	}
 	
 	/**
-	 * {@inheritdoc}
+	 * @inheritdoc
 	 */
 	public static function isAvailable() {
 		return class_exists('Redis', false);
+	}
+	
+	/**
+	 * @inheritdoc
+	 */
+	public function isPersistent() {
+		return true;
 	}
 	
 	/**
@@ -248,7 +255,7 @@ class Redis extends AbstractDriver {
 	 * @param $keyString
 	 * @return bool
 	 */
-	private function hasSubKeys($keyString) {
+	protected function hasSubKeys($keyString) {
 		return $this->redis->scan($iterator, $keyString.'*') !== false;
 	}
 	
@@ -256,7 +263,7 @@ class Redis extends AbstractDriver {
 	 * @param string $keyString
 	 * @return bool
 	 */
-	private function deleteSubKeys($keyString) {
+	protected function deleteSubKeys($keyString) {
 		$deletedSubKeys = false;
 		
 		$iterator = null;
@@ -268,13 +275,6 @@ class Redis extends AbstractDriver {
 		}
 		
 		return $deletedSubKeys;
-	}
-	
-	/**
-	 * {@inheritdoc}
-	 */
-	public function isPersistent() {
-		return true;
 	}
 	
 	/**
