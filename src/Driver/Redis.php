@@ -14,7 +14,7 @@ use Stash\Utilities;
  * The Redis driver is used for storing data on a Redis system. This class uses
  * the PhpRedis extension to access the Redis server.
  *
- * @package Respondens\Stash
+ * @package ResponStash
  * @author  Tim Strijdhorst <tim@decorrespondent.nl>
  * @author  Robert Hafner <tedivm@tedivm.com>
  */
