@@ -56,7 +56,7 @@ class Redis extends AbstractDriver {
 	 *
 	 * @var bool
 	 */
-	protected $normalizeKeys = false;
+	protected $normalizeKeys = true;
 	
 	/**
 	 * The options array should contain an array of servers,

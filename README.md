@@ -20,7 +20,7 @@ It remains to be seen if this implementation will take the place of the current 
 This package adds the following options
 
 ## ```normalize_keys```
-**default value**: false
+**default value**: true
 
 ***Note*** If set to false it is illegal to use ```:``` and ```_``` as part of your keys. Just define them as ```/part/of/a/nice/key/``` without using underscores and you'll be fine. 
 
