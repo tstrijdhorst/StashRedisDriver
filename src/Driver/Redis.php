@@ -266,6 +266,9 @@ class Redis extends AbstractDriver {
 	protected function deleteSubKeys($keyString) {
 		$deletedSubKeys = false;
 		
+		//Make sure the keystring ends in the separator or else it will also delete the newly indexed keys
+		$keyString .= ':';
+		
 		$iterator = null;
 		while ($subKeys = $this->redis->scan($iterator, $keyString.'*')) {
 			foreach ($subKeys as $subKey) {
