@@ -6,7 +6,7 @@ use PHPUnit\Framework\TestCase;
 use ResponStash\Driver\Redis;
 
 class RedisTest extends TestCase {
-	protected $redisServer = '127.0.0.1';
+	protected $redisServer = '192.168.33.11';
 	protected $redisPort   = 6379;
 	
 	/** @var  Redis */
@@ -22,6 +22,7 @@ class RedisTest extends TestCase {
 				'servers' => [
 					[$this->redisServer, $this->redisPort],
 				],
+				'normalize_keys' => false,
 			]
 		);
 		
