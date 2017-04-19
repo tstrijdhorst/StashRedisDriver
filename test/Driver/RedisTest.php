@@ -4,10 +4,11 @@ namespace ResponStashTest\Driver;
 
 use PHPUnit\Framework\TestCase;
 use ResponStash\Driver\Redis;
+use Stash\Utilities;
 
 class RedisTest extends TestCase {
 	protected $redisServer = '192.168.33.11';
-	protected $redisPort   = 6379;
+	protected $redisPort   = 6666;
 	
 	/** @var  Redis */
 	private $redisDriver;
@@ -19,26 +20,33 @@ class RedisTest extends TestCase {
 		
 		$this->redisDriver = new Redis(
 			[
-				'servers' => [
+				'servers'        => [
 					[$this->redisServer, $this->redisPort],
 				],
 				'normalize_keys' => false,
 			]
 		);
 		
-		//Lets get the redis client so we can do some manual confirmation
-		$redisProperty = (new \ReflectionClass($this->redisDriver))->getProperty('redis');
-		$redisProperty->setAccessible(true);
-		
-		$this->redisClient = $redisProperty->getValue($this->redisDriver);
+		$this->redisClient = new \Redis();
+		$this->redisClient->connect($this->redisServer, $this->redisPort);
+		$this->redisClient->flushDB();
 	}
 	
-	public function testItDeletesSubkeys() {
-		//@todo fix more generic also for normalization
-		//@todo clean redis after test
-		$keyBase                   = ['cache', 'namespace', 'test', 'directory'];
-		$keyBaseString             = 'cache:namespace:test:directory:';
-		$keyBaseStringAfterReindex = 'cache:namespace:test:directory_1:';
+	public function testItDeletesNormalizedSubkeys() {
+		$this->redisDriver = new Redis(
+			[
+				'servers'        => [
+					[$this->redisServer, $this->redisPort],
+				],
+				'normalize_keys' => true,
+			]
+		);
+		
+		$this->testItDeletesSubkeys($normalization = true);
+	}
+	
+	public function testItDeletesSubkeys($normalizeKeys = false) {
+		$keyBase = ['cache', 'namespace', 'test', 'directory'];
 		
 		$this->redisDriver->storeData($keyBase, 'stackparent', null);
 		$amountOfTestKeys = 5;
@@ -49,7 +57,13 @@ class RedisTest extends TestCase {
 			$key[]          = $testKeyIndexed;
 			
 			$this->redisDriver->storeData($key, 'stackChild', null);
-			$this->assertNotFalse($this->redisClient->get($keyBaseString.$testKeyIndexed));
+			
+			if ($normalizeKeys) {
+				$key = Utilities::normalizeKeys($key);
+			}
+			$keyCheck = implode(':', $key);
+			
+			$this->assertNotFalse($this->redisClient->get($keyCheck));
 		}
 		
 		//Delete the stackparent
@@ -64,14 +78,21 @@ class RedisTest extends TestCase {
 			$key[]          = $testKeyIndexed;
 			
 			$this->redisDriver->storeData($key, 'testdata', null);
-			$this->assertFalse($this->redisClient->get($keyBaseString.$testKeyIndexed), 'initial keys should be gone');
-			$this->assertNotFalse($this->redisClient->get($keyBaseStringAfterReindex.$testKeyIndexed), 'second batch of keys should exist with index');
+			
+			$keyCheckOldIndex = $keyCheckNewIndex = $key;
+			
+			if ($normalizeKeys) {
+				$keyCheckOldIndex = Utilities::normalizeKeys($key);
+				$keyCheckNewIndex = Utilities::normalizeKeys($key);
+			}
+			
+			$keyCheckStringOldIndex = implode(':', $keyCheckOldIndex);
+			
+			$keyCheckNewIndex[count($key) - 2] .= '_1';
+			$keyCheckStringNewIndex            = implode(':', $keyCheckNewIndex);
+			
+			$this->assertFalse($this->redisClient->get($keyCheckStringOldIndex), 'initial keys should be gone');
+			$this->assertNotFalse($this->redisClient->get($keyCheckStringNewIndex), 'second batch of keys should exist with index');
 		}
-		
-		//@todo better cleanup
-		//Delete the stackparent
-		$this->redisDriver->clear($keyBase);
-		$pathString = rtrim('pathdb:'.$keyBaseString, ':');
-		$this->redisClient->del($pathString);
 	}
 }
