@@ -71,7 +71,7 @@ class Redis extends AbstractDriver {
 	 *
 	 * @param array $options
 	 */
-	protected function setOptions(array $options = array()) {
+	protected function setOptions(array $options = []) {
 		$options += $this->getDefaultOptions();
 		
 		if (isset($options['normalize_keys'])) {
@@ -296,7 +296,7 @@ class Redis extends AbstractDriver {
 			}
 			
 			if (isset($server['socket'])) {
-				$servers[] = array('socket' => $server['socket'], 'ttl' => $ttl);
+				$servers[] = ['socket' => $server['socket'], 'ttl' => $ttl];
 				continue;
 			}
 			
