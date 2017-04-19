@@ -4,51 +4,79 @@ namespace ResponStashTest\Driver;
 
 use PHPUnit\Framework\TestCase;
 use ResponStash\Driver\Redis;
+use Stash\Exception\InvalidArgumentException;
 use Stash\Utilities;
 
 class RedisTest extends TestCase {
 	protected $redisServer = '192.168.33.11';
 	protected $redisPort   = 6666;
 	
-	/** @var  Redis */
-	private $redisDriver;
 	/** @var  \Redis */
 	private $redisClient;
 	
 	public function setUp() {
 		parent::setUp();
 		
-		$this->redisDriver = new Redis(
-			[
-				'servers'        => [
-					[$this->redisServer, $this->redisPort],
-				],
-				'normalize_keys' => true,
-			]
-		);
-		
 		$this->redisClient = new \Redis();
 		$this->redisClient->connect($this->redisServer, $this->redisPort);
 		$this->redisClient->flushDB();
 	}
 	
-	public function testItDeletesSubkeys() {
-		$this->redisDriver = new Redis(
+	public function testItDeletesUnnormalizedSubkeys() {
+		$this->deleteSubkeysTest($normalizeKeys = false);
+	}
+	
+	public function testItDeletedNormalizedSubkeys() {
+		$this->deleteSubkeysTest($normalizeKeys = true);
+	}
+	
+	public function testItCannotUseReservedCharactersIfUnnormalized() {
+		$redisDriver = $this->getDriverInstance($normalizeKeys = false);
+		
+		$expectedException = null;
+		try {
+			$redisDriver->storeData(['cache', 'namespace', 'illegalkey:'], ['data'], null);
+		}
+		catch(InvalidArgumentException $e) {
+			$expectedException = $e;
+		}
+		
+		$this->assertInstanceOf(InvalidArgumentException::class, $expectedException);
+		$this->assertEquals('You cannot use `:` or `_` in keys if key_normalization is off.', $expectedException->getMessage());
+		
+		$expectedException = null;
+		try {
+			$redisDriver->storeData(['cache', 'namespace', 'illegalkey_'], ['data'], null);
+		}
+		catch(InvalidArgumentException $e) {
+			$expectedException = $e;
+		}
+		
+		$this->assertInstanceOf(InvalidArgumentException::class, $expectedException);
+		$this->assertEquals('You cannot use `:` or `_` in keys if key_normalization is off.', $expectedException->getMessage());
+	}
+	
+	/**
+	 * @param bool $normalizeKeys
+	 * @return Redis
+	 */
+	protected function getDriverInstance($normalizeKeys = true) {
+		return new Redis(
 			[
 				'servers'        => [
 					[$this->redisServer, $this->redisPort],
 				],
-				'normalize_keys' => false,
+				'normalize_keys' => $normalizeKeys,
 			]
 		);
-		
-		$this->testItDeletesNormalizedSubkeys($normalization = false);
 	}
 	
-	public function testItDeletesNormalizedSubkeys($normalizeKeys = true) {
+	private function deleteSubkeysTest($normalizeKeys = true) {
+		$redisDriver = $this->getDriverInstance($normalizeKeys);
+		
 		$keyBase = ['cache', 'namespace', 'test', 'directory'];
 		
-		$this->redisDriver->storeData($keyBase, 'stackparent', null);
+		$redisDriver->storeData($keyBase, 'stackparent', null);
 		$amountOfTestKeys = 5;
 		//Insert initial data in a stacked structure
 		for ($i = 0; $i < $amountOfTestKeys; $i++) {
@@ -56,7 +84,7 @@ class RedisTest extends TestCase {
 			$testKeyIndexed = 'test'.$i;
 			$key[]          = $testKeyIndexed;
 			
-			$this->redisDriver->storeData($key, 'stackChild', null);
+			$redisDriver->storeData($key, 'stackChild', null);
 			
 			if ($normalizeKeys) {
 				$key = Utilities::normalizeKeys($key);
@@ -67,9 +95,9 @@ class RedisTest extends TestCase {
 		}
 		
 		//Delete the stackparent
-		$this->redisDriver->clear($keyBase);
+		$redisDriver->clear($keyBase);
 		
-		$this->assertFalse($this->redisDriver->getData($keyBase), 'The stackparent should not exist after deletion');
+		$this->assertFalse($redisDriver->getData($keyBase), 'The stackparent should not exist after deletion');
 		
 		//Insert the second batch of data that should now have a new index
 		for ($i = 0; $i < $amountOfTestKeys; $i++) {
@@ -77,7 +105,7 @@ class RedisTest extends TestCase {
 			$testKeyIndexed = 'test'.$i;
 			$key[]          = $testKeyIndexed;
 			
-			$this->redisDriver->storeData($key, 'testdata', null);
+			$redisDriver->storeData($key, 'testdata', null);
 			
 			$keyCheckOldIndex = $keyCheckNewIndex = $key;
 			
