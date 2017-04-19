@@ -59,52 +59,6 @@ class Redis extends AbstractDriver {
 	protected $normalizeKeys = true;
 	
 	/**
-	 * The options array should contain an array of servers,
-	 *
-	 * The "server" option expects an array of servers, with each server being represented by an associative array. Each
-	 * redis config must have either a "socket" or a "server" value, and optional "port" and "ttl" values (with the ttl
-	 * representing server timeout, not cache expiration).
-	 *
-	 * The "database" option lets developers specific which specific database to use.
-	 *
-	 * The "password" option is used for clusters which required authentication.
-	 *
-	 * @param array $options
-	 */
-	protected function setOptions(array $options = []) {
-		$options += $this->getDefaultOptions();
-		
-		if (isset($options['normalize_keys'])) {
-			$this->normalizeKeys = $options['normalize_keys'];
-		}
-		
-		// Normalize Server Options
-		if (isset($options['servers']) && count($options['servers']) > 0) {
-			$unprocessedServers = (is_array($options['servers'][0])) ? $options['servers'] : [$options['servers']];
-			$servers = $this->processServerConfigurations($unprocessedServers);
-		}
-		else {
-			$servers = [['server' => self::SERVER_DEFAULT_HOST, 'port' => self::SERVER_DEFAULT_PORT, 'ttl' => self::SERVER_DEFAULT_TTL]];
-		}
-		
-		/*
-		 * This will have to be revisited to support multiple servers, using the RedisArray object.
-		 * That object acts as a proxy object, meaning most of the class will be the same even after the changes.
-		 */
-		if (count($servers) == 1) {
-			$this->redis = $this->connectToSingleRedisServer($options, $servers[0]);
-		}
-		else {
-			$this->redis = $this->connectToMultipleRedisServers($options, $servers);
-		}
-		
-		// select database
-		if (isset($options['database'])) {
-			$this->redis->select($options['database']);
-		}
-	}
-	
-	/**
 	 * Properly close the connection.
 	 */
 	public function __destruct() {
@@ -199,6 +153,52 @@ class Redis extends AbstractDriver {
 	 */
 	public function isPersistent() {
 		return true;
+	}
+	
+	/**
+	 * The options array should contain an array of servers,
+	 *
+	 * The "server" option expects an array of servers, with each server being represented by an associative array. Each
+	 * redis config must have either a "socket" or a "server" value, and optional "port" and "ttl" values (with the ttl
+	 * representing server timeout, not cache expiration).
+	 *
+	 * The "database" option lets developers specific which specific database to use.
+	 *
+	 * The "password" option is used for clusters which required authentication.
+	 *
+	 * @param array $options
+	 */
+	protected function setOptions(array $options = []) {
+		$options += $this->getDefaultOptions();
+		
+		if (isset($options['normalize_keys'])) {
+			$this->normalizeKeys = $options['normalize_keys'];
+		}
+		
+		// Normalize Server Options
+		if (isset($options['servers']) && count($options['servers']) > 0) {
+			$unprocessedServers = (is_array($options['servers'][0])) ? $options['servers'] : [$options['servers']];
+			$servers = $this->processServerConfigurations($unprocessedServers);
+		}
+		else {
+			$servers = [['server' => self::SERVER_DEFAULT_HOST, 'port' => self::SERVER_DEFAULT_PORT, 'ttl' => self::SERVER_DEFAULT_TTL]];
+		}
+		
+		/*
+		 * This will have to be revisited to support multiple servers, using the RedisArray object.
+		 * That object acts as a proxy object, meaning most of the class will be the same even after the changes.
+		 */
+		if (count($servers) == 1) {
+			$this->redis = $this->connectToSingleRedisServer($options, $servers[0]);
+		}
+		else {
+			$this->redis = $this->connectToMultipleRedisServers($options, $servers);
+		}
+		
+		// select database
+		if (isset($options['database'])) {
+			$this->redis->select($options['database']);
+		}
 	}
 	
 	/**
