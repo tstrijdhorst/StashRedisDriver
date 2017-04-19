@@ -8,6 +8,7 @@
 namespace ResponStash\Driver;
 
 use Stash\Driver\AbstractDriver;
+use Stash\Exception\InvalidArgumentException;
 use Stash\Utilities;
 
 /**
@@ -218,7 +219,7 @@ class Redis extends AbstractDriver {
 		$keyString = '';
 		foreach ($keyParts as $keyPart) {
 			if (!$this->normalizeKeys && (strpos($keyPart, ':') || strpos($keyPart, '_'))) {
-				throw new \Exception('You cannot use `:` or `_` in keys if key_normalization is off.');
+				throw new InvalidArgumentException('You cannot use `:` or `_` in keys if key_normalization is off.');
 			}
 			
 			$keyString .= $keyPart;
