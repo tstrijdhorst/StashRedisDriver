@@ -179,7 +179,7 @@ class Redis extends AbstractDriver {
 		// Normalize Server Options
 		if (isset($options['servers']) && count($options['servers']) > 0) {
 			$unprocessedServers = (is_array($options['servers'][0])) ? $options['servers'] : [$options['servers']];
-			$servers = $this->processServerConfigurations($unprocessedServers);
+			$servers            = $this->processServerConfigurations($unprocessedServers);
 		}
 		else {
 			$servers = [['server' => self::SERVER_DEFAULT_HOST, 'port' => self::SERVER_DEFAULT_PORT, 'ttl' => self::SERVER_DEFAULT_TTL]];
@@ -257,28 +257,38 @@ class Redis extends AbstractDriver {
 	 * @return bool
 	 */
 	protected function hasSubKeys($keyString) {
-		return $this->redis->scan($iterator, $keyString.'*') !== false;
+		/**
+		 * PHPRedis examples are lying. It will not return a boolean false if there are no keys but it will return an empty array.
+		 * But it will also return an empty array if there are no keys fetched in this iteration even though there are more keys to be fetched
+		 * because there are no guarantees given for that.
+		 * So we will need to check whether there are no keys until the iterator is set to 0 which means the whole space has been traversed.
+		 *
+		 * For more information see @link https://redis.io/commands/scan#number-of-elements-returned-at-every-scan-call
+		 */
+		
+		$iterator   = null;
+		$hasSubKeys = false;
+		while ($iterator !== 0 && $hasSubKeys === false) {
+			$hasSubKeys = $this->redis->scan($iterator, $keyString.':*') !== [];
+		}
+		
+		return $hasSubKeys;
 	}
 	
 	/**
 	 * @param string $keyString
-	 * @return bool
 	 */
 	protected function deleteSubKeys($keyString) {
-		$deletedSubKeys = false;
-		
-		//Make sure the keystring ends in the separator or else it will also delete the newly indexed keys
-		$keyString .= ':';
+		//Make sure the pattern matches with in the separator as the last char or else it will also delete the newly indexed keys
+		$pattern = $keyString.':*';
 		
 		$iterator = null;
-		while ($subKeys = $this->redis->scan($iterator, $keyString.'*')) {
+		while ($iterator !== 0) {
+			$subKeys = $this->redis->scan($iterator, $pattern);
 			foreach ($subKeys as $subKey) {
 				$this->redis->delete($subKey);
-				$deletedSubKeys = true;
 			}
 		}
-		
-		return $deletedSubKeys;
 	}
 	
 	/**
