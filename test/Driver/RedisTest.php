@@ -23,7 +23,7 @@ class RedisTest extends TestCase {
 				'servers'        => [
 					[$this->redisServer, $this->redisPort],
 				],
-				'normalize_keys' => false,
+				'normalize_keys' => true,
 			]
 		);
 		
@@ -32,20 +32,20 @@ class RedisTest extends TestCase {
 		$this->redisClient->flushDB();
 	}
 	
-	public function testItDeletesNormalizedSubkeys() {
+	public function testItDeletesSubkeys() {
 		$this->redisDriver = new Redis(
 			[
 				'servers'        => [
 					[$this->redisServer, $this->redisPort],
 				],
-				'normalize_keys' => true,
+				'normalize_keys' => false,
 			]
 		);
 		
-		$this->testItDeletesSubkeys($normalization = true);
+		$this->testItDeletesNormalizedSubkeys($normalization = false);
 	}
 	
-	public function testItDeletesSubkeys($normalizeKeys = false) {
+	public function testItDeletesNormalizedSubkeys($normalizeKeys = true) {
 		$keyBase = ['cache', 'namespace', 'test', 'directory'];
 		
 		$this->redisDriver->storeData($keyBase, 'stackparent', null);
