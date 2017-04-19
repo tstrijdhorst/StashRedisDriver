@@ -56,6 +56,46 @@ class RedisTest extends TestCase {
 		$this->assertEquals('You cannot use `:` or `_` in keys if key_normalization is off.', $expectedException->getMessage());
 	}
 	
+	public function testItIncreasedTheIndexAfterStackParentDeletion() {
+		$keyBase = ['cache', 'namespace', 'test', 'directory'];
+		$redisDriver = $this->getDriverInstance($normalizeKeys = false);
+		
+		$pathDbProperty = (new \ReflectionClass($redisDriver))->getProperty('pathPrefix');
+		$pathDbProperty->setAccessible(true);
+		$pathDb = $pathDbProperty->getValue($redisDriver);
+		
+		$testKey = $keyBase;
+		$testKey[] = 'key1';
+		$redisDriver->storeData($testKey, ['testData'], null);
+		$this->assertNotFalse($this->redisClient->get('cache:namespace:test:directory:key1'));
+		
+		$redisDriver->clear($keyBase);
+		$this->assertFalse($this->redisClient->get('cache:namespace:test:directory:key1'));
+		$this->assertEquals(1, $this->redisClient->get($pathDb.'cache:namespace:test:directory'));
+		
+		$redisDriver->storeData($testKey,['testData'], null);
+		$this->assertNotFalse($this->redisClient->get('cache:namespace:test:directory_1:key1'));
+		
+		$redisDriver->clear($keyBase);
+		$this->assertFalse($this->redisClient->get('cache:namespace:test:directory_1:key1'));
+		$this->assertEquals(2, $this->redisClient->get($pathDb.'cache:namespace:test:directory'));
+	}
+	
+	public function testItDoesNotIncreaseAnIndexAfterLeafDeletion() {
+		$keyBase = ['cache', 'namespace', 'test', 'directory'];
+		$redisDriver = $this->getDriverInstance($normalizeKeys = false);
+		
+		$pathDbProperty = (new \ReflectionClass($redisDriver))->getProperty('pathPrefix');
+		$pathDbProperty->setAccessible(true);
+		$pathDb = $pathDbProperty->getValue($redisDriver);
+		
+		$redisDriver->storeData($keyBase, ['testData'], null);
+		$this->assertNotFalse($this->redisClient->get('cache:namespace:test:directory'));
+		
+		$redisDriver->clear($keyBase);
+		$this->assertFalse($this->redisClient->get($pathDb.'cache:namespace:test:directory'));
+	}
+	
 	/**
 	 * @param bool $normalizeKeys
 	 * @return Redis
