@@ -16,6 +16,27 @@ Therefore the Drivers (which depend on third party software) should be in sepera
 
 It remains to be seen if this implementation will take the place of the current driver in the Stash project. That will become clear after communication with the project leaders.
 
+# Unsupported Features
+
+## Multiple Servers
+In contrast to the original Redis Driver from the Stash project this driver does not support multiple servers. To keep the interface similar to the other drivers the configuration key is still called servers though.
+
+Example:
+
+```php
+<?php
+		$options = [
+			'servers' => [
+				['127.0.0.1', 6379],
+			],
+		];
+		$driver  = new ResponStash\Driver\Redis($options);
+		
+		$this->stashPool = new \Stash\Pool($driver);
+```
+
+***Note*** Multiple server support could be added by using Predis instead of PHPRedis since it supports actual clustering instead of \RedisArray. If you want this I'm looking forward to the PR.
+
 # Extra Options
 This package adds the following options
 
