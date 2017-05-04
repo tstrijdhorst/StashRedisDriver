@@ -8,8 +8,8 @@ use Stash\Exception\InvalidArgumentException;
 use Stash\Utilities;
 
 class RedisTest extends TestCase {
-	protected $redisServer = '127.0.0.1';
-	protected $redisPort   = 6379;
+	protected $redisServer = '192.168.33.11';
+	protected $redisPort   = 6666;
 	
 	/** @var  \Redis */
 	private $redisClient;

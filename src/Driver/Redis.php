@@ -176,25 +176,18 @@ class Redis extends AbstractDriver {
 			$this->normalizeKeys = $options['normalize_keys'];
 		}
 		
-		// Normalize Server Options
-		if (isset($options['servers']) && count($options['servers']) > 0) {
-			$unprocessedServers = (is_array($options['servers'][0])) ? $options['servers'] : [$options['servers']];
-			$servers            = $this->processServerConfigurations($unprocessedServers);
-		}
-		else {
-			$servers = [['server' => self::SERVER_DEFAULT_HOST, 'port' => self::SERVER_DEFAULT_PORT, 'ttl' => self::SERVER_DEFAULT_TTL]];
+		if (!isset($options['servers'])) {
+			throw new \Exception('Driver requires server information to function');
 		}
 		
-		/*
-		 * This will have to be revisited to support multiple servers, using the RedisArray object.
-		 * That object acts as a proxy object, meaning most of the class will be the same even after the changes.
-		 */
-		if (count($servers) == 1) {
-			$this->redis = $this->connectToSingleRedisServer($options, $servers[0]);
+		if (count($options['servers']) > 1) {
+			throw new \Exception('Driver does not support multiple servers');
 		}
-		else {
-			$this->redis = $this->connectToMultipleRedisServers($options, $servers);
-		}
+		
+		$unprocessedServer = $options['servers'][0];
+		$server            = $this->processServerConfiguration($unprocessedServer);
+		
+		$this->redis = $this->connectToSingleRedisServer($options, $server[0]);
 		
 		// select database
 		if (isset($options['database'])) {
@@ -292,53 +285,47 @@ class Redis extends AbstractDriver {
 	}
 	
 	/**
-	 * @param array $unprocessedServers
+	 * @param array $unprocessedServer
 	 * @return array
 	 */
-	protected function processServerConfigurations(array $unprocessedServers) {
-		$servers = [];
-		foreach ($unprocessedServers as $server) {
-			$ttl = '.1';
-			if (isset($server['ttl'])) {
-				$ttl = $server['ttl'];
-			}
-			elseif (isset($server[2])) {
-				$ttl = $server[2];
-			}
-			
-			if (isset($server['socket'])) {
-				$servers[] = ['socket' => $server['socket'], 'ttl' => $ttl];
-				continue;
-			}
-			
-			$host = self::SERVER_DEFAULT_HOST;
-			if (isset($server['server'])) {
-				$host = $server['server'];
-			}
-			elseif (isset($server[0])) {
-				$host = $server[0];
-			}
-			
-			$port = self::SERVER_DEFAULT_PORT;
-			if (isset($server['port'])) {
-				$port = $server['port'];
-			}
-			elseif (isset($server[1])) {
-				$port = $server[1];
-			}
-			
-			$servers[] = ['server' => $host, 'port' => $port, 'ttl' => $ttl];
+	protected function processServerConfiguration(array $unprocessedServer) {
+		$ttl = self::SERVER_DEFAULT_TTL;
+		if (isset($unprocessedServer['ttl'])) {
+			$ttl = $unprocessedServer['ttl'];
+		}
+		elseif (isset($unprocessedServer[2])) {
+			$ttl = $unprocessedServer[2];
 		}
 		
-		return $servers;
+		if (isset($unprocessedServer['socket'])) {
+			return ['socket' => $unprocessedServer['socket'], 'ttl' => $ttl];
+		}
+		
+		$port = self::SERVER_DEFAULT_PORT;
+		if (isset($unprocessedServer['port'])) {
+			$port = $unprocessedServer['port'];
+		}
+		elseif (isset($unprocessedServer[1])) {
+			$port = $unprocessedServer[1];
+		}
+		
+		$host = self::SERVER_DEFAULT_HOST;
+		if (isset($unprocessedServer['server'])) {
+			$host = $unprocessedServer['server'];
+		}
+		elseif (isset($unprocessedServer[0])) {
+			$host = $unprocessedServer[0];
+		}
+		
+		return ['server' => $host, 'port' => $port, 'ttl' => $ttl];
 	}
 	
 	/**
 	 * @param array $options
-	 * @param       $server
+	 * @param array $server
 	 * @return \Redis
 	 */
-	protected function connectToSingleRedisServer(array $options, $server) {
+	protected function connectToSingleRedisServer(array $options, array $server) {
 		$redis = new \Redis();
 		
 		if (isset($server['socket']) && $server['socket']) {
