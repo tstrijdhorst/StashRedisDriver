@@ -342,30 +342,4 @@ class Redis extends AbstractDriver {
 		
 		return $redis;
 	}
-	
-	/**
-	 * @param array $options
-	 * @param array $servers
-	 * @return \RedisArray
-	 */
-	protected function connectToMultipleRedisServers(array $options, array $servers) {
-		$redisArrayOptions = [];
-		foreach (static::$redisArrayOptionNames as $optionName) {
-			if (isset($options[$optionName])) {
-				$redisArrayOptions[$optionName] = $options[$optionName];
-			}
-		}
-		
-		$serverArray = [];
-		foreach ($servers as $server) {
-			$serverString = $server['server'];
-			if (isset($server['port'])) {
-				$serverString .= ':'.$server['port'];
-			}
-			
-			$serverArray[] = $serverString;
-		}
-		
-		return new \RedisArray($serverArray, $redisArrayOptions);
-	}
 }
